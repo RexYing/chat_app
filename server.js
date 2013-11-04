@@ -24,10 +24,30 @@ router.use(express.static(path.resolve(__dirname, 'client')));
 var messages = [];
 var sockets = [];
 
+function askServer() {
+  console.log("Asking for list of connected peers...");
+  
+  var PORT = 8080;
+  var HOST = '127.2.34.129';
+  
+  var dgram = require('dgram');
+  var message = new Buffer('My KungFu is Good!');
+  
+  var client = dgram.createSocket('udp4');
+  client.send(message, 0, message.length, PORT, HOST, function(err, bytes) {
+      if (err) throw err;
+      console.log('UDP message sent to ' + HOST +':'+ PORT);
+      client.close();
+  });
+}
+
 io.on('connection', function (socket) {
+    // display all the previous messages
     messages.forEach(function (data) {
       socket.emit('message', data);
     });
+    
+    askServer();
 
     sockets.push(socket);
 
@@ -60,6 +80,7 @@ io.on('connection', function (socket) {
     });
   });
 
+
 function updateRoster() {
   async.map(
     sockets,
@@ -78,7 +99,9 @@ function broadcast(event, data) {
   });
 }
 
+
 server.listen(process.env.PORT || 3000, process.env.IP || "0.0.0.0", function(){
   var addr = server.address();
   console.log("Chat server listening at", addr.address + ":" + addr.port);
 });
+
